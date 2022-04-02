@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.parstagram.Post
 import com.example.parstagram.PostAdapter
 import com.example.parstagram.R
@@ -21,6 +22,7 @@ open class FeedFragment : Fragment() {
     lateinit var postsRecyclerView: RecyclerView
     lateinit var adapter: PostAdapter
     var allPosts: MutableList<Post> = mutableListOf()
+    lateinit var swipeContainer: SwipeRefreshLayout
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -33,9 +35,19 @@ open class FeedFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        swipeContainer = view.findViewById(R.id.swipeContainer)
+        swipeContainer.setOnRefreshListener {
+            queryPosts()
+        }
+
+        swipeContainer.setColorSchemeResources(android.R.color.holo_blue_bright,
+            android.R.color.holo_green_light,
+            android.R.color.holo_orange_light,
+            android.R.color.holo_red_light);
+
         postsRecyclerView = view.findViewById(R.id.postRecyclerView)
 
-        adapter = PostAdapter(requireContext(), allPosts)
+        adapter = PostAdapter(requireContext(), allPosts as ArrayList<Post>)
         postsRecyclerView.adapter = adapter
         postsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
 
@@ -56,11 +68,13 @@ open class FeedFragment : Fragment() {
                     Log.e(TAG, "Error fetching posts")
                 }else{
                     if (posts != null) {
+                        adapter.clear()
                         for (post in posts) {
                             Log.i(TAG, "Post: " + post.getDescription() + " ,username: " + post.getUser()?.username)
                         }
                         allPosts.addAll(posts)
                         adapter.notifyDataSetChanged()
+                        swipeContainer.setRefreshing(false)
 
                     }
                 }
